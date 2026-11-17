@@ -1,0 +1,59 @@
+# Pipeline: cada cambio en la rama main actualiza los servicios en el servidor Ubuntu
+# (criterio de aceptación 4 del PDF).
+#
+# Secretos que hay que crear en GitHub -> Settings -> Secrets and variables -> Actions:
+#   EC2_HOST     IP pública (Elastic IP) del servidor
+#   EC2_USER     ubuntu
+#   EC2_SSH_KEY  contenido completo del archivo .pem
+
+name: Deploy EntradasYa
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Revisar y compilar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+      - name: Revisar sintaxis, README, .env.example y /health
+        run: npm run check
+      - name: Compilar la web
+        run: npm run build:web
+
+  deploy:
+    name: Desplegar en el servidor
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Copiar el código al servidor
+        run: |
+          rsync -az --delete \
+            --exclude '.git' --exclude 'node_modules' --exclude '**/node_modules' \
+            --exclude '.env' --exclude '**/.env' --exclude 'web/dist' --exclude '**/data' \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            ./ "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/entradasya/"
+
+      - name: Ejecutar deploy.sh (instalar, compilar, reiniciar y verificar /health)
+        run: ssh -i ~/.ssh/deploy_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" "sudo bash /opt/entradasya/infra/scripts/deploy.sh"

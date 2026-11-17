@@ -1,0 +1,21 @@
+{
+  "name": "entradasya",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EntradasYa v1: 8 servicios comunicados por REST, sin contenedores",
+  "workspaces": [
+    "services/*",
+    "web"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "dev:services": "node scripts/dev.js --no-web",
+    "build:web": "npm run build -w web",
+    "check": "node scripts/check.js",
+    "smoke": "node scripts/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=22.9"
+  }
+}

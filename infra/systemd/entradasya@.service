@@ -1,0 +1,24 @@
+# Plantilla systemd: un proceso por servicio.
+#   sudo systemctl status entradasya@orders
+#   journalctl -u entradasya@orders -f
+# La configuración de cada servicio está en /etc/entradasya/<servicio>.env
+
+[Unit]
+Description=EntradasYa - servicio %i
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/entradasya/services/%i
+EnvironmentFile=/etc/entradasya/%i.env
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=entradasya-%i
+
+[Install]
+WantedBy=multi-user.target

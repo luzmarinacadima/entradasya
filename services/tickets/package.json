@@ -1,0 +1,21 @@
+{
+  "name": "@entradasya/tickets",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EntradasYa v1 - servicio tickets",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --env-file-if-exists=.env --watch src/index.js"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "pdfkit": "^0.15.2",
+    "pg": "^8.13.1",
+    "qrcode": "^1.5.4"
+  }
+}
