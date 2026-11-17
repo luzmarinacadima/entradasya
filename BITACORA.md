@@ -33,6 +33,21 @@
 - **Solución:** no instalar WSL/Docker Desktop todavía; programar en Windows y desplegar en una EC2 de AWS.
 - **¿Contenedor?** En parte: las imágenes también ocupan espacio, pero se pueden borrar fácilmente (`docker system prune`).
 
+### 2026-11-16 · PC (Windows) · `winget`, `code` y `aws` no se reconocían
+- **Causa:** el `setx` anterior recortó el PATH de usuario y se perdieron `WindowsApps`, VS Code y npm; además, el instalador de la AWS CLI no agregó su carpeta al PATH de la terminal abierta.
+- **Solución:** reconstruir el PATH con PowerShell y agregar `C:\Program Files\Amazon\AWSCLIV2`. Cerrar y abrir VS Code para que lo tome.
+- **¿Contenedor?** Sí: la imagen `amazon/aws-cli` trae la CLI sin tocar el PATH.
+
+### 2026-11-16 · AWS · `UnauthorizedOperation` al crear la EC2 en us-east-1
+- **Causa:** la cuenta pertenece a una organización con una Service Control Policy que bloquea EC2 en casi todas las regiones (explicit deny).
+- **Solución:** probar regiones con `aws ec2 describe-key-pairs --region <r>`; solo **us-east-2 (Ohio)** está permitida. El servidor se creó allí con `infra/scripts/create-ec2.ps1`.
+- **¿Contenedor?** No: es una restricción de la cuenta de AWS, no del software.
+
+### 2026-11-16 · Servidor · Instalación manual en la EC2
+- **Detalle:** `setup-server.sh` instaló PostgreSQL 16 (no 17 como en la PC), Node 22.23, Nginx 1.24 y Mailpit 1.33; se agregó swap de 2 GB porque t3.micro solo tiene 1 GB de RAM.
+- **Riesgo:** versiones distintas entre la PC (PostgreSQL 17) y el servidor (PostgreSQL 16).
+- **¿Contenedor?** Sí: la misma imagen (`postgres:17`, `node:22`) correría igual en la PC y en el servidor.
+
 ---
 
 <!-- Copia esta plantilla para cada problema nuevo:
